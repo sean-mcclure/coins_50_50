@@ -9,6 +9,10 @@ body {
     padding-top: 20px;
 }
 
+h3 {
+    color: #ffda79;
+}
+
 
 #wrapper {
     display: grid;

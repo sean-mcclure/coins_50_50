@@ -121,6 +121,43 @@ function draw() {
             .attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2).attr("y", d => barSvg.attr("height") - d - 5).attr("text-anchor", "middle").text((d, i) => i === 0 ? exact5050Sequences : sequences - exact5050Sequences).style("fill", (d, i) => i === 0 ? "red" : "white");;
         labels.transition().attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2).attr("y", d => barSvg.attr("height") - d - 5).text((d, i) => i === 0 ? exact5050Sequences : sequences - exact5050Sequences);
         labels.exit().remove();
+
+        const legendData = ['50-50 Sequences', 'Other Sequences'];
+
+        const legend = barSvg.append("g")
+    .attr("class", "legend")
+    .attr("transform", "translate(0,0)"); // Adjust the position of the legend
+
+    const colorScale = d3.scaleOrdinal()
+    .domain(legendData)
+    .range(['red', 'white']);
+
+    const legendItems = legend.selectAll(".legend-item")
+    .data(legendData)
+    .enter().append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust spacing between legend items
+
+legendItems.append("rect")
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", d => colorScale(d));
+
+legendItems.append("text")
+    .attr("x", 20) // Spacing between rect and text
+    .attr("y", 10)
+    .attr("dy", "0.35em")
+    .style("fill", "white")
+    .style("font-size", 10)
+    .text(d => d);
+
+
+
+
+
+
+
+
         setTimeout(updateBarChart, 10); // Update the bar chart with a delay for better visualization
     }
     // Start updating the bar chart
