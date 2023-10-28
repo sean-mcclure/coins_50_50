@@ -18,7 +18,7 @@ body {
 [id^=item_] {
     height: 400px;
     border: 10px solid black;
-    background: #d1ccc0;
+    background: #303952;
     padding: 20px;
 }
 #item_1 {
@@ -46,7 +46,12 @@ body {
 }
 
 .x-axis-label, .y-axis-label {
-    font-size: 14px; /* Adjust the font size as needed */
-    font-family: Arial, sans-serif; /* Specify the desired font family */
-    fill: #333; /* Set the label color */
+    font-size: 14px; 
+    font-family: Arial, sans-serif; 
+    fill: white; 
+}
+
+g.x-axis text,
+g.y-axis text {
+    font-size: 28px; 
 }

@@ -12,26 +12,33 @@ function call_once_satisfied(props) {
         }, 100)
     }
 }
-
-
 call_once_satisfied({
     condition: "typeof(d3) !== 'undefined' && document.getElementById('bar-chart') !== null && document.getElementById('sequence-visualization') !== null",
     function: function() {
-        draw(number_of_flips = 1000, sequence_length = 10);
+        draw();
     }
 })
 
-
-function draw(number_of_flips = 1000, sequence_length = 10) {
-
-    document.querySelectorAll("svg").forEach(function (elem) {
-        elem.innerHTML = "";
-    })
-    document.getElementById("item_1").childNodes.forEach(function(elem) {
-        elem.remove();
-     })
-                                                          
+function draw() {
+    check_flips = localStorage.getItem('number_of_flips');
+    check_sequence = localStorage.getItem('sequence_length');
+    if(check_flips !== null) {
+        number_of_flips = Number(check_flips);
+    } else {
+        number_of_flips = 1000;
+    }
+    if(check_sequence !== null) {
+        sequence_length = Number(check_sequence);
+    } else {
+        sequence_length = 10;
+    }
+    document.getElementById("flips").value = number_of_flips;
+    document.getElementById("flips-value").innerText = number_of_flips;
+    document.getElementById("sequence-length").value = sequence_length;
+    document.getElementById("sequence-length-value").innerText = sequence_length;
    
+    console.log("number_of_flips: " + number_of_flips)
+    console.log("sequence_length: " + sequence_length)
     // Initialize variables for the line chart
     const margin = {
         top: 20,
@@ -61,24 +68,30 @@ function draw(number_of_flips = 1000, sequence_length = 10) {
     }
     // Update the visualization
     function updateVisualization() {
-        if(sequences < totalSequences) {
+        if (sequences < totalSequences) {
             const sequence = generateRandomSequence(sequence_length); // 10 coin flips for the example
             sequences++;
             const headsCount = sequence.filter(result => result === 'H').length;
-            if(headsCount === 5) {
+            const tailsCount = sequence.length - headsCount;
+    
+            if (headsCount === tailsCount) {
                 exact5050Sequences++;
                 currentSequence += '<span style="color: red;">' + sequence.join('') + '</span> ';
             } else {
                 currentSequence += sequence.join('') + ' ';
             }
+    
             sequenceDiv.html(currentSequence);
+           
+           
+           
             const probability = exact5050Sequences / sequences;
             probabilities.push(probability);
             svg.selectAll("*").remove();
             const xScale = d3.scaleLinear().domain([0, sequences]).range([0, containerWidth]);
             const yScale = d3.scaleLinear().domain([0, 1]).range([containerHeight, 0]);
             const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            g.append("path").datum(probabilities).attr("fill", "none").attr("stroke", "steelblue").attr("stroke-width", 4).attr("d", d3.line().x((d, i) => xScale(i)).y(d => yScale(d)));
+            g.append("path").datum(probabilities).attr("fill", "none").attr("stroke", "#3dc1d3").attr("stroke-width", 4).attr("d", d3.line().x((d, i) => xScale(i)).y(d => yScale(d)));
             g.append("g").attr("transform", "translate(0," + containerHeight + ")").call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
             g.append("g").call(d3.axisLeft(yScale));
             // Append the x-axis label with a class
@@ -99,13 +112,13 @@ function draw(number_of_flips = 1000, sequence_length = 10) {
         const scaledBarData = barData.map(d => (d > maxFlips ? maxFlips : d) * scaleFactor);
         // Update bars
         const bars = barSvg.selectAll("rect").data(scaledBarData);
-        bars.enter().append("rect").attr("x", (d, i) => i * (barWidth + barPadding)).attr("y", d => barSvg.attr("height") - d).attr("width", barWidth).attr("height", d => d).attr("fill", (d, i) => i === 0 ? "red" : "steelblue").attr("class", "bar") // Add a class for styling
+        bars.enter().append("rect").attr("x", (d, i) => i * (barWidth + barPadding)).attr("y", d => barSvg.attr("height") - d).attr("width", barWidth).attr("height", d => d).attr("fill", (d, i) => i === 0 ? "red" : "white").attr("class", "bar") // Add a class for styling
         bars.transition().attr("y", d => barSvg.attr("height") - d).attr("height", d => d);
         bars.exit().remove();
         // Update labels
         const labels = barSvg.selectAll(".bar-label").data(scaledBarData);
         labels.enter().append("text").attr("class", "bar-label") // Add a class for styling
-            .attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2).attr("y", d => barSvg.attr("height") - d - 5).attr("text-anchor", "middle").text((d, i) => i === 0 ? exact5050Sequences : sequences - exact5050Sequences);
+            .attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2).attr("y", d => barSvg.attr("height") - d - 5).attr("text-anchor", "middle").text((d, i) => i === 0 ? exact5050Sequences : sequences - exact5050Sequences).style("fill", (d, i) => i === 0 ? "red" : "white");;
         labels.transition().attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2).attr("y", d => barSvg.attr("height") - d - 5).text((d, i) => i === 0 ? exact5050Sequences : sequences - exact5050Sequences);
         labels.exit().remove();
         setTimeout(updateBarChart, 10); // Update the bar chart with a delay for better visualization
@@ -115,8 +128,19 @@ function draw(number_of_flips = 1000, sequence_length = 10) {
     // Start updating the line chart
     updateVisualization();
     document.getElementById("sequence-length").addEventListener("change", function(e) {
-        draw(number_of_flips = 1000, sequence_length = e.target.value);
-   
-        
+        localStorage.setItem('number_of_flips', document.getElementById("flips").value);
+        localStorage.setItem('sequence_length', document.getElementById("sequence-length").value);
+        location.reload();
+    })
+    document.getElementById("flips").addEventListener("change", function(e) {
+        localStorage.setItem('number_of_flips', document.getElementById("flips").value);
+        localStorage.setItem('sequence_length', document.getElementById("sequence-length").value);
+        location.reload();
+    })
+    document.getElementById("sequence-length").addEventListener("input", function(e) {
+        document.getElementById("sequence-length-value").innerText = e.target.value;
+    })
+    document.getElementById("flips").addEventListener("input", function(e) {
+        document.getElementById("flips-value").innerText = e.target.value;
     })
 }
