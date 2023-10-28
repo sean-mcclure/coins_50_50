@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+       #wrapper {
+  display: grid;
+  grid-template-columns: 200px 200px 600px;
+} 
+[id^=item_] {
+  height: 400px;
+  border: 1px solid black;
+}
+      
+      #item_1 {
+        overflow: scroll;
+      }
+      #item_2 {
+        display; flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      #bar-chart {
+        width: 100px;
+        height: 400px;
+        margin: 10px;
+      }
+      
+#sequence-visualization {
+            width: 600px;
+            height: 300px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+    </style>
+</head>
+<body>
+  <div id="wrapper">
+    <div id='item_1'></div>
+    <div id="item_2"><svg id="bar-chart" width="200" height="300"></svg>
+</div>
+    <div id='item_3'><svg id="sequence-visualization" width="600" height="300"></svg></div>
+  </div>
+   
+    
+
+    <script>
+        // Initialize variables
+        const svg = d3.select("#sequence-visualization");
+        const sequenceDiv = d3.select("#item_1");
+        const totalSequences = 1000; // Total number of sequences to generate
+        let sequences = 0;
+        let exact5050Sequences = 0;
+        let probabilities = [];
+        let currentSequence = "";
+
+        // Create an array of random coin flips
+        function generateRandomSequence(length) {
+            return Array.from({ length }, () => (Math.random() < 0.5 ? 'H' : 'T'));
+        }
+
+        // Update the visualization
+        function updateVisualization() {
+            if (sequences < totalSequences) {
+                const sequence = generateRandomSequence(10); // 10 coin flips for the example
+                sequences++;
+                const headsCount = sequence.filter(result => result === 'H').length;
+
+                if (headsCount === 5) {
+                    exact5050Sequences++;
+                    currentSequence += '<span style="color: red;">' + sequence.join('') + '</span> ';
+                } else {
+                    currentSequence += sequence.join('') + ' ';
+                }
+
+                sequenceDiv.html(currentSequence);
+
+                const probability = exact5050Sequences / sequences;
+                probabilities.push(probability);
+
+                // Update the chart
+                const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+                const width = 600 - margin.left - margin.right;
+                const height = 300 - margin.top - margin.bottom;
+
+                svg.selectAll("*").remove();
+
+                const xScale = d3.scaleLinear().domain([0, sequences]).range([0, width]);
+                const yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+
+                const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                g.append("path")
+                    .datum(probabilities)
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 2)
+                    .attr("d", d3.line()
+                        .x((d, i) => xScale(i))
+                        .y(d => yScale(d))
+                    );
+
+                // Add X and Y axes
+                g.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+
+                g.append("g")
+                    .call(d3.axisLeft(yScale));
+
+                // Label the axes
+                svg.append("text")
+                    .attr("text-anchor", "middle")
+                    .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height + margin.top + 25) + ")")
+                    .text("Number of Flips");
+
+                svg.append("text")
+                    .attr("text-anchor", "middle")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -height / 2 - margin.top)
+                    .attr("y", 10)
+                    .text("Probability");
+
+                setTimeout(updateVisualization, 10); // Update the visualization with a delay for better visualization
+            }
+        }
+      
+      // Initialize variables for the bar chart
+const barSvg = d3.select("#bar-chart");
+const barWidth = 40;
+const barPadding = 10;
+let barData = [];
+
+// Update the bar chart
+function updateBarChart() {
+    barData = [exact5050Sequences, sequences - exact5050Sequences];
+    const maxFlips = 1000;
+    const scaleFactor = barSvg.attr("height") / maxFlips;
+
+    // Scale the bar heights if the total flips exceed the maximum
+    const scaledBarData = barData.map(d => (d > maxFlips ? maxFlips : d) * scaleFactor);
+
+    // Update bars
+    const bars = barSvg.selectAll("rect").data(scaledBarData);
+
+    bars.enter()
+        .append("rect")
+        .attr("x", (d, i) => i * (barWidth + barPadding))
+        .attr("y", d => barSvg.attr("height") - d)
+        .attr("width", barWidth)
+        .attr("height", d => d)
+        .attr("fill", (d, i) => i === 0 ? "red" : "steelblue");
+
+    bars.transition()
+        .attr("y", d => barSvg.attr("height") - d)
+        .attr("height", d => d);
+
+    bars.exit().remove();
+
+    // Update labels
+    const labels = barSvg.selectAll("text").data(scaledBarData);
+
+    labels.enter()
+        .append("text")
+        .attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2)
+        .attr("y", d => barSvg.attr("height") - d - 5)
+        .attr("text-anchor", "middle")
+        .text(d => d > 0 ? Math.round(d / scaleFactor) : 0); // Show original count for non-scaled bars
+
+    labels.transition()
+        .attr("x", (d, i) => i * (barWidth + barPadding) + barWidth / 2)
+        .attr("y", d => barSvg.attr("height") - d - 5)
+        .text(d => d > 0 ? Math.round(d / scaleFactor) : 0);
+
+    labels.exit().remove();
+
+    setTimeout(updateBarChart, 10); // Update the bar chart with a delay for better visualization
+}
+
+// Start updating the bar chart
+updateBarChart();
+
+
+
+        // Start the visualization
+        updateVisualization();
+    </script>
+</body>
+</html>
